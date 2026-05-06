@@ -1,0 +1,87 @@
+================================================================================
+AutoPoC Test Run — llmsearchindex
+Date: 2026-05-06T15:03:26.265938+00:00
+Total run_script invocations: 2
+================================================================================
+
+================================================================================
+RUN #1: /workspace/llmsearchindex/poc_test.py
+STARTED: 2026-05-06T15:03:26.265938+00:00
+EXIT CODE: 1
+DURATION: 0.07s
+================================================================================
+
+--- STDOUT ---
+(empty)
+
+--- STDERR ---
+Traceback (most recent call last):
+  File "/workspace/llmsearchindex/poc_test.py", line 30, in <module>
+    ssl_ctx = ssl.create_unverified_context()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'ssl' has no attribute 'create_unverified_context'. Did you mean: '_create_unverified_context'?
+
+
+================================================================================
+RUN #2: /workspace/llmsearchindex/poc_test.py
+STARTED: 2026-05-06T15:04:04.882795+00:00
+EXIT CODE: 0
+DURATION: 0.21s
+================================================================================
+
+--- STDOUT ---
+{
+  "results": [
+    {
+      "scenario_name": "health-check",
+      "status": "pass",
+      "output": "ok",
+      "error_message": null,
+      "duration_seconds": 0.11
+    },
+    {
+      "scenario_name": "streamlit-ui-loads",
+      "status": "pass",
+      "output": "<!--\n Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2026)\n\n Licensed under the Apache License, Version 2.0 (the \"License\");\n you may not use this file except in compliance with the License.\n You may obtain a copy of the License at\n\n     http://www.apache.org/licenses/LICENSE-2.0\n\n Unless required by applicable law or agreed to in writing, software\n distributed under the License is distributed on an \"AS IS\" BASIS,\n WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n See the License for the specific language governing permissions and\n limitations under the License.\n-->\n\n<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"UTF-8\" />\n    <meta\n      name=\"viewport\"\n      content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"\n    />\n    <link rel=\"shortcut icon\" href=\"./favicon.png\" />\n    <link\n      rel=\"preload\"\n      href=\"./static/media/SourceSansVF-Upright.ttf.BsWL4Kly.woff2\"\n      as=\"font\"\n      type=\"font/woff2\"\n      crossorigin\n    />\n\n    <title>Streamlit</title>\n\n    <!-- initialize window.prerenderReady to false and then set to true in React app when app is ready for indexing -->\n    <script>\n      window.prerenderReady = false\n    </script>\n    <script type=\"module\" crossorigin src=\"./static/js/index.D2ZqaFuW.js\"></script>\n    <link rel=\"modulepreload\" crossorigin href=\"./static/js/chunk.DuxOD-Sk.js\">\n    <link rel=\"modulepreload\" crossorigin href=\"./static/js/preload-helper.CAj27AsG.js\">\n    <link rel=\"modulepreload\" crossorigin href=\"./static/js/emotion-is-prop-valid.esm.DV_OErv-.js\">\n    <link rel=\"modulepreload\" crossorigin href=\"./static/js/emotion-styled.browser.esm.BPUx6WuE.js\">\n    <link rel=\"modulepreload\" crossorigin href=\"./static/js/getColors.DUygtxH4.js\">\n    <link rel=\"modulepreload\" crossorigin href=\"./static/js/assertNever.B_SfJlM1.js\">\n    <link rel=\"modulepreload\" crossorigin href=\"./static/js/protobuf.DyZGXwGk.js\">\n    <link rel=\"modulepreload\" crossorigin href=\"./static/js/isSymbol.",
+      "error_message": null,
+      "duration_seconds": 0.02
+    },
+    {
+      "scenario_name": "search-api-test",
+      "status": "pass",
+      "output": "ok",
+      "error_message": null,
+      "duration_seconds": 0.01
+    }
+  ]
+}
+
+
+--- STDERR ---
+============================================================
+PoC Test: llmsearchindex
+Service URL: https://streamlit-app-llmsearchindex.apps.ocp-gb.ibm.redhataicatalyst.com
+============================================================
+
+[1/3] Testing: Health Check (/_stcore/health)
+
+[2/3] Testing: Streamlit UI Loads (/)
+
+[3/3] Testing: Search Readiness (Streamlit app with index loaded)
+
+============================================================
+Results: 3 passed, 0 failed, 3 total
+  ✅ health-check: pass (0.11s)
+  ✅ streamlit-ui-loads: pass (0.02s)
+  ✅ search-api-test: pass (0.01s)
+============================================================
+
+
+================================================================================
+PARSED RESULTS SUMMARY
+================================================================================
+Total: 3 | Pass: 3 | Fail: 0 | Error: 0 | Skip: 0
+
+  [PASS ] health-check (0.1s)
+  [PASS ] streamlit-ui-loads (0.0s)
+  [PASS ] search-api-test (0.0s)
