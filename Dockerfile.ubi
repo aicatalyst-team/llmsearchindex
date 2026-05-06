@@ -20,6 +20,9 @@ RUN dnf install -y \
     && dnf clean all
 
 # ---- environment ---------------------------------------------------------- #
+# HF_HOME / TRANSFORMERS_CACHE point at the PVC mount for large downloads.
+# SENTENCE_TRANSFORMERS_HOME also under PVC — the entrypoint seeds it from
+# the pre-baked model so the embedding model is available immediately.
 ENV HF_HOME=/data/hf_cache \
     TRANSFORMERS_CACHE=/data/hf_cache \
     SENTENCE_TRANSFORMERS_HOME=/data/hf_cache/sentence-transformers \
@@ -29,8 +32,8 @@ ENV HF_HOME=/data/hf_cache \
 WORKDIR /opt/app-root/src
 
 # ---- install Python dependencies ------------------------------------------ #
-# Install PyTorch CPU-only FIRST (separate line — --extra-index-url is safe
-# but keeps the install isolated to avoid version conflicts).
+# Install PyTorch CPU-only FIRST (separate line so the extra-index-url does
+# not interfere with other packages).
 RUN pip install --no-cache-dir \
         torch torchvision torchaudio \
         --extra-index-url https://download.pytorch.org/whl/cpu
@@ -39,23 +42,34 @@ RUN pip install --no-cache-dir \
 COPY requirements.txt pyproject.toml ./
 COPY llmsearchindex/ ./llmsearchindex/
 
-# Fix requirements.txt: replace "faiss" with "faiss-cpu" (faiss doesn't exist on PyPI)
+# Fix requirements.txt: replace "faiss" with "faiss-cpu" (faiss doesn't exist
+# on PyPI) and install.  Also ensure streamlit is explicitly installed.
 RUN sed -i 's/^faiss>=/faiss-cpu>=/' requirements.txt && \
     pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir streamlit
 
-# Install the llmsearchindex package itself (editable not needed in container)
+# Install the llmsearchindex package itself
 RUN pip install --no-cache-dir .
 
-# ---- pre-download the embedding model (small ~90 MB, OK to bake in) ------- #
-RUN mkdir -p /data/hf_cache && \
+# ---- pre-download the embedding model (small ~90 MB) ---------------------- #
+# Bake the model into /opt/app-root/models — a path that is NOT shadowed
+# by the PVC mount at /data.  The entrypoint script copies it into the PVC
+# cache on first boot so sentence-transformers finds it without re-downloading.
+RUN mkdir -p /opt/app-root/models/sentence-transformers && \
+    SENTENCE_TRANSFORMERS_HOME=/opt/app-root/models/sentence-transformers \
     python -c "from sentence_transformers import SentenceTransformer; \
                SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
 
 # ---- copy application code ------------------------------------------------ #
 COPY streamlit_app.py search.py ./
 
+# ---- copy entrypoint script ----------------------------------------------- #
+COPY entrypoint.sh /opt/app-root/src/entrypoint.sh
+RUN chmod +x /opt/app-root/src/entrypoint.sh
+
 # ---- create /data volume mount point & fix permissions -------------------- #
+# /data will be overlaid by a PVC at runtime; the entrypoint handles init.
+# Group 0 permissions on /opt/app-root allow arbitrary UID in OpenShift.
 RUN mkdir -p /data && \
     chgrp -R 0 /opt/app-root /data && \
     chmod -R g=u /opt/app-root /data
@@ -66,6 +80,7 @@ USER 1001
 # ---- expose & run --------------------------------------------------------- #
 EXPOSE 8501
 
+ENTRYPOINT ["/opt/app-root/src/entrypoint.sh"]
 CMD ["streamlit", "run", "streamlit_app.py", \
      "--server.port=8501", \
      "--server.address=0.0.0.0", \
