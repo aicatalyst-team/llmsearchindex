@@ -1,0 +1,72 @@
+# --------------------------------------------------------------------------- #
+# Dockerfile.ubi — streamlit-app (RAG / ML workload, CPU-only)
+# Base: UBI9 Python 3.12  •  OpenShift-compatible (arbitrary UID, non-root)
+# --------------------------------------------------------------------------- #
+FROM registry.access.redhat.com/ubi9/python-312
+
+# --- metadata ---
+LABEL name="streamlit-app" \
+      summary="LLMSearchIndex Streamlit RAG application" \
+      io.openshift.expose-services="8501:http"
+
+# ---- system deps (as root) ------------------------------------------------ #
+USER 0
+
+RUN dnf install -y \
+        gcc \
+        gcc-c++ \
+        make \
+        openblas-devel \
+    && dnf clean all
+
+# ---- environment ---------------------------------------------------------- #
+ENV HF_HOME=/data/hf_cache \
+    TRANSFORMERS_CACHE=/data/hf_cache \
+    SENTENCE_TRANSFORMERS_HOME=/data/hf_cache/sentence-transformers \
+    PIP_NO_CACHE_DIR=1
+
+# ---- working directory ---------------------------------------------------- #
+WORKDIR /opt/app-root/src
+
+# ---- install Python dependencies ------------------------------------------ #
+# Install PyTorch CPU-only FIRST (separate line — --extra-index-url is safe
+# but keeps the install isolated to avoid version conflicts).
+RUN pip install --no-cache-dir \
+        torch torchvision torchaudio \
+        --extra-index-url https://download.pytorch.org/whl/cpu
+
+# Copy dependency manifests and install remaining deps
+COPY requirements.txt pyproject.toml ./
+COPY llmsearchindex/ ./llmsearchindex/
+
+# Fix requirements.txt: replace "faiss" with "faiss-cpu" (faiss doesn't exist on PyPI)
+RUN sed -i 's/^faiss>=/faiss-cpu>=/' requirements.txt && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir streamlit
+
+# Install the llmsearchindex package itself (editable not needed in container)
+RUN pip install --no-cache-dir .
+
+# ---- pre-download the embedding model (small ~90 MB, OK to bake in) ------- #
+RUN mkdir -p /data/hf_cache && \
+    python -c "from sentence_transformers import SentenceTransformer; \
+               SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
+
+# ---- copy application code ------------------------------------------------ #
+COPY streamlit_app.py search.py ./
+
+# ---- create /data volume mount point & fix permissions -------------------- #
+RUN mkdir -p /data && \
+    chgrp -R 0 /opt/app-root /data && \
+    chmod -R g=u /opt/app-root /data
+
+# ---- drop back to non-root ------------------------------------------------ #
+USER 1001
+
+# ---- expose & run --------------------------------------------------------- #
+EXPOSE 8501
+
+CMD ["streamlit", "run", "streamlit_app.py", \
+     "--server.port=8501", \
+     "--server.address=0.0.0.0", \
+     "--server.headless=true"]
