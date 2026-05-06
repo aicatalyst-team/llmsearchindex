@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/part-of: llmsearchindex
     app.kubernetes.io/managed-by: autopoc
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app.kubernetes.io/name: streamlit-app
   ports:

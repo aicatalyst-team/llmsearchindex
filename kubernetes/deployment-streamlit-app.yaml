@@ -32,6 +32,8 @@ spec:
               value: /data/hf_cache
             - name: SENTENCE_TRANSFORMERS_HOME
               value: /data/hf_cache/sentence-transformers
+            - name: HF_HUB_CACHE
+              value: /data/hf_cache/hub
           resources:
             requests:
               memory: 4Gi
@@ -42,28 +44,36 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
+          startupProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8501
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
           readinessProbe:
             httpGet:
               path: /_stcore/health
               port: 8501
-            initialDelaySeconds: 300
+            initialDelaySeconds: 10
             periodSeconds: 15
             timeoutSeconds: 5
-            failureThreshold: 20
+            failureThreshold: 3
           livenessProbe:
             httpGet:
               path: /_stcore/health
               port: 8501
-            initialDelaySeconds: 300
+            initialDelaySeconds: 10
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 10
           securityContext:
             allowPrivilegeEscalation: false
+            runAsNonRoot: true
             capabilities:
               drop:
                 - ALL
-            runAsNonRoot: true
       volumes:
         - name: data
           persistentVolumeClaim:
