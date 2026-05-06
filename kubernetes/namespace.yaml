@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: llmsearchindex
+  labels:
+    app.kubernetes.io/name: llmsearchindex
+    app.kubernetes.io/managed-by: autopoc
