@@ -1,4 +1,10 @@
-# llmsearchindex
+> [!WARNING]
+> **This repository is archived.**
+>
+> Archived on 2026-09-08 by the AI Catalyst Platform Team.
+> It is read-only and no longer maintained.
+
+---# llmsearchindex
 
 **LLMSearchIndex** LLMSearchIndex is a library and search index that provides fully local, internet-scale web search for LLM RAG applications, trained on 203,169,792 web pages sourced from:
 - [Wikipedia dataset](https://huggingface.co/datasets/wikimedia/wikipedia)
